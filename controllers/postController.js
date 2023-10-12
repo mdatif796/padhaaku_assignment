@@ -2,9 +2,9 @@ const Post = require("../models/post");
 const User = require("../models/user");
 
 module.exports.create_post = async (req, res) => {
-  const { user, content } = req.body;
+  const { userId, content } = req.body;
 
-  if (!user || !content) {
+  if (!userId || !content) {
     return res.status(500).json({
       message: "UserId and post content are mandatory",
     });
@@ -12,7 +12,7 @@ module.exports.create_post = async (req, res) => {
 
   try {
     // first find out if the user exist
-    let postUser = await User.findById(user);
+    let postUser = await User.findById(userId);
 
     if (!postUser) {
       return res.status(500).json({
@@ -20,7 +20,7 @@ module.exports.create_post = async (req, res) => {
       });
     }
 
-    await Post.create({ user, content });
+    await Post.create({ user: userId, content: content });
 
     return res.status(200).json({
       message: "Successfully created.",
@@ -33,6 +33,12 @@ module.exports.create_post = async (req, res) => {
 };
 
 module.exports.delete_post = async (req, res) => {
+  if (req.params.postId.length < 24) {
+    return res.status(500).json({
+      message: "Enter correct post id",
+    });
+  }
+
   try {
     // first find the post by the id
     let post = await Post.findById(req.params.postId);
@@ -47,6 +53,32 @@ module.exports.delete_post = async (req, res) => {
 
     return res.status(200).json({
       message: "Successful post deletion",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error.",
+    });
+  }
+};
+
+module.exports.get_user_posts = async (req, res) => {
+  if (req.params.userId.length < 24) {
+    return res.status(500).json({
+      message: "Enter correct user id",
+    });
+  }
+  try {
+    // first find if the user exist or not
+    let user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(500).json({
+        message: "User not exist",
+      });
+    }
+
+    let posts = await Post.find({ user: req.params.userId });
+    return res.status(200).json({
+      posts,
     });
   } catch (error) {
     return res.status(500).json({
