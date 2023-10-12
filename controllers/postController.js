@@ -31,3 +31,26 @@ module.exports.create_post = async (req, res) => {
     });
   }
 };
+
+module.exports.delete_post = async (req, res) => {
+  try {
+    // first find the post by the id
+    let post = await Post.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(500).json({
+        message: "Post not found.",
+      });
+    }
+
+    await Post.findByIdAndDelete(req.params.postId);
+
+    return res.status(200).json({
+      message: "Successful post deletion",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error.",
+    });
+  }
+};
